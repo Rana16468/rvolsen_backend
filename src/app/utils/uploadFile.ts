@@ -1,37 +1,35 @@
 import multer from "multer";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
-import status from "http-status";
 import fs from "fs";
+import status from "http-status";
 import AppError from "../errors/AppError";
-
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     let folderPath = "./src/public";
+    const mimetype = file.mimetype.toLowerCase();
 
-    if (file.mimetype.startsWith("image")) {
+    if (mimetype.startsWith("image")) {
       folderPath = "./src/public/images";
-    } else if (file.mimetype === "application/pdf") {
+    } else if (mimetype === "application/pdf") {
       folderPath = "./src/public/pdf";
-    } else if (file.mimetype.startsWith("video")) {
+    } else if (mimetype.startsWith("video")) {
       folderPath = "./src/public/videos";
+    } else if (mimetype.startsWith("audio")) {
+      folderPath = "./src/public/audios";
     } else {
-      cb(
+      // ✅ Pass second argument as empty string to satisfy type
+      return cb(
         new AppError(
           status.BAD_REQUEST,
-          "Only images, PDFs, and videos are allowed",
-          ""
+          "Only images, PDFs, videos, and audios are allowed"
         ),
-        "./src/public"
+        ""
       );
-      return;
     }
 
-    // Ensure folder exists
-    if (!fs.existsSync(folderPath)) {
-      fs.mkdirSync(folderPath, { recursive: true });
-    }
+    if (!fs.existsSync(folderPath)) fs.mkdirSync(folderPath, { recursive: true });
 
     cb(null, folderPath);
   },
@@ -43,51 +41,43 @@ const storage = multer.diskStorage({
       .toLowerCase()
       .split(" ")
       .join("-")}-${uuidv4()}`;
-
     cb(null, fileName + fileExt);
   },
 });
 
-// Multer limits
+const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  const mimetype = file.mimetype.toLowerCase();
+
+  const allowedMimeTypes = [
+    // Images
+    "image/jpeg", "image/png", "image/gif", "image/webp", "image/bmp",
+    "image/tiff", "image/svg+xml", "image/heic", "image/heif",
+    "image/x-icon", "image/vnd.microsoft.icon",
+
+    // PDF
+    "application/pdf",
+
+    // Video
+    "video/mp4", "video/mpeg", "video/quicktime", "video/webm",
+  ];
+
+  // Allow all audio types dynamically
+  if (mimetype.startsWith("audio") || allowedMimeTypes.includes(mimetype)) {
+    return cb(null, true);
+  }
+
+  cb(
+    new AppError(
+      status.BAD_REQUEST,
+      "Only images, PDFs, videos, and audios are allowed"
+    )
+  );
+};
+
 const upload = multer({
   storage,
-  limits: {
-    fileSize: 300 * 1024 * 1024, // 250 MB in bytes
-  },
-  fileFilter: (req, file, cb) => {
-   const allowedMimeTypes = [
-  "image/jpeg",        // .jpeg, .jpg
-  "image/png",         // .png
-  "image/gif",         // .gif
-  "image/webp",        // .webp
-  "image/bmp",         // .bmp
-  "image/tiff",        // .tif, .tiff
-  "image/svg+xml",     // .svg
-  "image/heic", 
-  "image/HEIC",       // .heic (iPhone photos)
-  "image/heif",        // .heif
-  "image/x-icon",      // .ico
-  "image/vnd.microsoft.icon", // .ico alternative
-];
-
-
-    // Allow images/PDFs
-    if (allowedMimeTypes.includes(file.mimetype)) {
-      return cb(null, true);
-    }
-
-    // Allow videos
-    if (file.mimetype.startsWith("video")) {
-      return cb(null, true);
-    }
-
-    return cb(
-      new AppError(
-        status.BAD_REQUEST,
-        "Only images, PDFs, and videos are allowed"
-      )
-    );
-  },
+  limits: { fileSize: 300 * 1024 * 1024 }, // 300 MB
+  fileFilter,
 });
 
 export default upload;
