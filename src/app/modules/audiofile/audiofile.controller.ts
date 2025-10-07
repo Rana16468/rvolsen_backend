@@ -27,12 +27,24 @@ const findByAllAudio:RequestHandler=catchAsync(async(req , res)=>{
     message: "Successfully Find By All Audio",
     data: result,
   });
+});
+
+const  deleteAudioFile:RequestHandler=catchAsync(async(req , res)=>{
+
+       const result=await AudioFileServices.deleteAudioFileIntoDb(req.params.id);
+                   sendResponse(res, {
+    success: true,
+    statusCode: status.OK,
+    message: "Successfully Delete Audio",
+    data: result,
+  });
 })
 
 
 const  AudioFileController={
     uploadAudioFile,
-    findByAllAudio
+    findByAllAudio,
+     deleteAudioFile
 };
 
 export default AudioFileController;

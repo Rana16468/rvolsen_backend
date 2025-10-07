@@ -4,7 +4,7 @@ import { RequestWithFile, UploadAudioResponse } from "./audiofile.interface";
 import uploaduudios from "./audiofile.model";
 import QueryBuilder from "../../builder/QueryBuilder";
 
-
+import fs from "fs";
 
 const uploadAudioFileIntoDb=async( req:RequestWithFile,userId:string):Promise< UploadAudioResponse >=>{
 
@@ -80,9 +80,41 @@ const findByAllAudioIntoDb=async(query: Record<string, unknown>)=>{
 }
 
 
+ const deleteAudioFileIntoDb = async (id: string) => {
+  try {
+    const isExist = await uploaduudios.findOne({ _id: id }).select("_id audioUrl");
+
+    if (!isExist) {
+      throw new AppError(status.NOT_FOUND, "Audio not found");
+    }
+
+    // Delete file from filesystem
+    const filePath = isExist.audioUrl;
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+
+    // Optionally remove from DB
+    await uploaduudios.findByIdAndDelete(id);
+
+    return {
+      success: true,
+      message: "Successfully deleted audio",
+    };
+  } catch (error: any) {
+    throw new AppError(
+      status.INTERNAL_SERVER_ERROR,
+      "Error deleting audio file",
+      error
+    );
+  }
+}
+
+
 const AudioFileServices={
     uploadAudioFileIntoDb,
-    findByAllAudioIntoDb
+    findByAllAudioIntoDb,
+     deleteAudioFileIntoDb
 };
 
 export default AudioFileServices;
