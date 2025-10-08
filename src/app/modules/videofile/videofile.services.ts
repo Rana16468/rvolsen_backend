@@ -2,6 +2,7 @@ import status from "http-status";
 import AppError from "../../errors/AppError";
 import { RequestWithFile, VideoFileResponse } from "./videofile.interface";
 import videofiles from "./videofile.model";
+import QueryBuilder from "../../builder/QueryBuilder";
 
 const uploadVideoFileIntoDb=async( req:RequestWithFile,userId:string):Promise< VideoFileResponse >=>{
 
@@ -45,8 +46,46 @@ const uploadVideoFileIntoDb=async( req:RequestWithFile,userId:string):Promise< V
 };
 
 
+const findByAllVideoSocialFeedIntoDb=async (query: Record<string, unknown>)=>{
+  try{
+
+         const allVideoSocialFeedQuery = new QueryBuilder(
+                  videofiles.find({}).populate([
+                      {
+            path: 'userId',
+            select: 'name  photo',
+          },
+                ]).select(" -isDelete -updatedAt").lean(),
+              query     
+            )
+              .search([]) 
+              .filter()                          
+              .sort()                            
+              .paginate()                       
+              .fields(); 
+        
+            const socialFeeds = await allVideoSocialFeedQuery .modelQuery;
+            const meta = await allVideoSocialFeedQuery .countTotal();
+        
+            return { meta,  socialFeeds };
+
+    }
+
+    catch (error: any) {
+    throw new AppError(
+      status.INTERNAL_SERVER_ERROR,
+      "Error find By All Video Social Feed IntoDb",
+      error
+    );
+  }
+
+
+}
+
+
 const VideoFilesServices={
-     uploadVideoFileIntoDb
+     uploadVideoFileIntoDb,
+     findByAllVideoSocialFeedIntoDb
 };
 
 export default  VideoFilesServices;

@@ -18,8 +18,22 @@ const  uploadVideoFile:RequestHandler=catchAsync(async(req , res)=>{
 
 });
 
+
+const  findByAllVideoSocialFeed:RequestHandler=catchAsync(async(req , res)=>{
+
+      const result=await VideoFilesServices.findByAllVideoSocialFeedIntoDb(req.query);
+                        sendResponse(res, {
+    success: true,
+    statusCode: status.OK,
+    message: "Successfully Find By All Video",
+    data: result,
+  });
+
+})
+
 const VideoFilesController={
-    uploadVideoFile
+    uploadVideoFile,
+    findByAllVideoSocialFeed
 };
 
 export default  VideoFilesController;

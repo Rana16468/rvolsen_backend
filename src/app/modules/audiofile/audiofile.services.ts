@@ -116,6 +116,10 @@ const myRecordingSoundLibraryIntoDb=async(userId:string, query: Record<string, u
 
              const myRecordingSoundQuery = new QueryBuilder(
                   uploaduudios.find({userId}).populate([
+                     {
+            path: 'userId',
+            select: 'name photo',
+          },
                    
                 ]).select("-userId -isDelete -updatedAt").lean(),
               query     
@@ -129,7 +133,7 @@ const myRecordingSoundLibraryIntoDb=async(userId:string, query: Record<string, u
             const myRecordLibrary= await myRecordingSoundQuery .modelQuery;
             const meta = await myRecordingSoundQuery .countTotal();
         
-            return { meta,  myRecordLibrary };
+            return { meta,myRecordLibrary };
 
     }
 
@@ -142,6 +146,7 @@ const myRecordingSoundLibraryIntoDb=async(userId:string, query: Record<string, u
   }
      
 }
+
 
 const AudioFileServices={
     uploadAudioFileIntoDb,

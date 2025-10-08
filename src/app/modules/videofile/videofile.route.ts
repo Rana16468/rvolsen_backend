@@ -28,6 +28,8 @@ route.post(
   VideoFilesController.uploadVideoFile
 );
 
+route.get("/find_by_all_social_feed_video", auth(USER_ROLE.user), VideoFilesController.findByAllVideoSocialFeed)
+
 
 const videoFileRoutes=route;
 
