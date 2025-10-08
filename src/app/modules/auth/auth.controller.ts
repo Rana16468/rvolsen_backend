@@ -81,6 +81,19 @@ const deleteAccount: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 
+const isBlockAccount: RequestHandler = catchAsync(async (req, res) => {
+  const result = await AuthServices.isBlockAccountIntoDb(
+    req.params.id,
+    req.body
+  );
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Successfully Change Status ",
+    data: result,
+  });
+});
+
 
 
 const AuthController = {
@@ -90,6 +103,7 @@ const AuthController = {
   chnageMyProfile,
   findByAllUsersAdmin,
   deleteAccount,
+   isBlockAccount
 
 };
 

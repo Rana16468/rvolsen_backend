@@ -54,11 +54,20 @@ const changeMyProfileSchema = z.object({
   }),
 });
 
+
+const changeUserAccountStatus = z.object({
+  body: z.object({
+    status: z.boolean(),
+  }),
+});
+
+
 const LoginValidationSchema = {
   LoginSchema,
   requestTokenValidationSchema,
   forgetPasswordValidation,
   resetVerification,
   changeMyProfileSchema,
+  changeUserAccountStatus 
 };
 export default LoginValidationSchema;

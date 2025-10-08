@@ -279,6 +279,35 @@ const deleteAccountIntoDb = async (id: string) => {
   }
 };
 
+const isBlockAccountIntoDb = async (
+  id: string,
+  payload: { status: boolean }
+) => {
+
+  try {
+    const status = payload?.status
+      ? USER_ACCESSIBILITY.isProgress
+      : USER_ACCESSIBILITY.blocked;
+
+    const result = await users.findByIdAndUpdate(
+      id,
+      { status: status },
+      { new: true, upsert: true }
+    );
+
+    return result ? { status: true, message: `successfully ${status} ` } : "";
+  } catch (error: any) {
+    throw new AppError(
+      httpStatus.SERVICE_UNAVAILABLE,
+      " is block account into db server unavailable",
+      error
+    );
+  }
+};
+
+
+
+
 
 const AuthServices = {
   loginUserIntoDb,
@@ -287,6 +316,7 @@ const AuthServices = {
   changeMyProfileIntoDb,
   findByAllUsersAdminIntoDb,
   deleteAccountIntoDb,
+  isBlockAccountIntoDb
 
 };
 

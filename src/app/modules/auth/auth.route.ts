@@ -74,5 +74,13 @@ router.delete(
   AuthController.deleteAccount
 );
 
+
+router.patch(
+  "/change_status/:id",
+  auth(USER_ROLE.admin, USER_ROLE.superAdmin),
+  validationRequest(LoginValidationSchema.changeUserAccountStatus),
+  AuthController.isBlockAccount
+);
+
 const AuthRouter = router;
 export default AuthRouter;
