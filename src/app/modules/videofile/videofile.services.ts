@@ -5,6 +5,7 @@ import videofiles from "./videofile.model";
 import QueryBuilder from "../../builder/QueryBuilder";
 
 import fs from "fs";
+import mongoose from "mongoose";
 
 const uploadVideoFileIntoDb=async( req:RequestWithFile,userId:string):Promise< VideoFileResponse >=>{
 
@@ -48,39 +49,123 @@ const uploadVideoFileIntoDb=async( req:RequestWithFile,userId:string):Promise< V
 };
 
 
-const findByAllVideoSocialFeedIntoDb=async (query: Record<string, unknown>)=>{
-  try{
+type TMeta = {
+  limit: number;
+  page: number;
+  total: number;
+  totalPage: number;
+};
 
-         const allVideoSocialFeedQuery = new QueryBuilder(
-                  videofiles.find({}).populate([
-                      {
-            path: 'userId',
-            select: 'name  photo',
-          },
-                ]).select(" -isDelete -updatedAt").lean(),
-              query     
-            )
-              .search([]) 
-              .filter()                          
-              .sort()                            
-              .paginate()                       
-              .fields(); 
-        
-            const socialFeeds = await allVideoSocialFeedQuery .modelQuery;
-            const meta = await allVideoSocialFeedQuery .countTotal();
-        
-            return { meta,  socialFeeds };
+const findByAllVideoSocialFeedIntoDb = async (query: Record<string, unknown>) => {
+  try {
+ 
+    const page = parseInt((query as any).page as string) || 1;
+    const limit = parseInt((query as any).limit as string) || 10;
+    const skip = (page - 1) * limit;
 
-    }
+    
+    const pipeline: any[] = [
+      { $match: { isDelete: { $ne: true } } }, 
 
-    catch (error: any) {
+      
+      {
+        $lookup: {
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      { $unwind: "$user" },
+
+      // Lookup likes
+      {
+        $lookup: {
+          from: "reactlikes",
+          let: { videoId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $and: [{ $eq: ["$videofileId", "$$videoId"] }, { $eq: ["$isLike", true] }] },
+              },
+            },
+          ],
+          as: "likes",
+        },
+      },
+
+    
+      {
+        $lookup: {
+          from: "reactdislikes",
+          let: { videoId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $and: [{ $eq: ["$videofileId", "$$videoId"] }, { $eq: ["$dislike", true] }] },
+              },
+            },
+          ],
+          as: "dislikes",
+        },
+      },
+
+    
+      {
+        $addFields: {
+          isLike: { $gt: [{ $size: "$likes" }, 0] },
+          isDislike: { $gt: [{ $size: "$dislikes" }, 0] },
+        },
+      },
+
+      // Project required fields
+      {
+        $project: {
+          title: 1,
+          videoUrl: 1,
+          like: 1,
+          dislike: 1,
+          share: 1,
+          "user.name": 1,
+          "user.photo": 1,
+          isLike: 1,
+          isDislike: 1,
+        },
+      },
+
+      { $sort: { createdAt: -1 } }, // Optional: default sort
+      { $skip: skip },
+      { $limit: limit },
+    ];
+
+    // 3️⃣ Execute aggregation
+    const socialFeeds = await videofiles.aggregate(pipeline);
+
+    // 4️⃣ Total count for meta (respects filters)
+    const totalResult = await videofiles.aggregate([
+      { $match: { isDelete: { $ne: true } } },
+      { $count: "total" },
+    ]);
+    const total = totalResult[0]?.total || 0;
+    const totalPage = Math.ceil(total / limit);
+
+    const meta: TMeta = {
+      page,
+      limit,
+      total,
+      totalPage,
+    };
+
+    return { meta, socialFeeds };
+  } catch (error: any) {
     throw new AppError(
       status.INTERNAL_SERVER_ERROR,
       "Error find By All Video Social Feed IntoDb",
       error
     );
   }
-}
+};
+
 
 
 
