@@ -55,13 +55,28 @@ const  deleteVideoFile:RequestHandler=catchAsync(async(req , res)=>{
   });
 
 
+});
+
+
+const getVideoGrowth:RequestHandler=catchAsync(async(req , res)=>{
+  const result = await VideoFilesServices.getVideoGrowthIntoDb(req.query);
+  sendResponse(res, {
+    success: true,
+    statusCode: status.OK,
+    message: "Successfully  Find Video Growth",
+    data: result,
+  });
+
+
 })
 
 const VideoFilesController={
     uploadVideoFile,
     findByAllVideoSocialFeed,
     findMyAllVideoSocialFeed,
-    deleteVideoFile
+    deleteVideoFile,
+    getVideoGrowth
+    
 };
 
 export default  VideoFilesController;

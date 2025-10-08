@@ -31,6 +31,7 @@ route.post(
 route.get("/find_by_all_social_feed_video", auth(USER_ROLE.user), VideoFilesController.findByAllVideoSocialFeed)
 route.get("/find_myl_social_feed_video", auth(USER_ROLE.user),VideoFilesController.findMyAllVideoSocialFeed);
 route.delete("/delete_video_file/:id", auth(USER_ROLE.user,USER_ROLE.admin,USER_ROLE.superAdmin), VideoFilesController.deleteVideoFile);
+route.get("/find_by_video_growth", auth(USER_ROLE.admin, USER_ROLE.superAdmin), VideoFilesController.getVideoGrowth);
 
 const videoFileRoutes=route;
 

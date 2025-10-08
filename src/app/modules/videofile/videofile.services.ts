@@ -229,11 +229,121 @@ const findMyAllVideoSocialFeedIntoDb=async (query: Record<string, unknown>, user
 };
 
 
+const getVideoGrowthIntoDb = async (query: { year?: string }) => {
+  try {
+    const year = query.year ? parseInt(query.year) : new Date().getFullYear();
+    const previousYear = year - 1;
+
+    // Get current year stats (monthly + total)
+    const currentYearStats = await videofiles.aggregate([
+      {
+        $match: {
+          createdAt: {
+            $gte: new Date(`${year}-01-01T00:00:00.000Z`),
+            $lte: new Date(`${year}-12-31T23:59:59.999Z`),
+          },
+        },
+      },
+      {
+        $group: {
+          _id: { month: { $month: "$createdAt" } },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          month: "$_id.month",
+          count: 1,
+          _id: 0,
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalCount: { $sum: "$count" },
+          data: { $push: { month: "$month", count: "$count" } },
+        },
+      },
+      {
+        $project: {
+          totalCount: 1,
+          months: {
+            $map: {
+              input: { $range: [1, 13] },
+              as: "m",
+              in: {
+                year,
+                month: "$$m",
+                count: {
+                  $let: {
+                    vars: {
+                      matched: {
+                        $arrayElemAt: [
+                          {
+                            $filter: {
+                              input: "$data",
+                              as: "d",
+                              cond: { $eq: ["$$d.month", "$$m"] },
+                            },
+                          },
+                          0,
+                        ],
+                      },
+                    },
+                    in: { $ifNull: ["$$matched.count", 0] },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    ]);
+
+    // Get previous year total count (simplified)
+    const previousYearCount = await videofiles.countDocuments({
+      createdAt: {
+        $gte: new Date(`${previousYear}-01-01T00:00:00.000Z`),
+        $lte: new Date(`${previousYear}-12-31T23:59:59.999Z`),
+      },
+    });
+
+    const currentYearTotal = currentYearStats[0]?.totalCount || 0;
+
+    // Calculate year-over-year growth
+    let yearlyGrowth = 0;
+    if (previousYearCount > 0) {
+      yearlyGrowth =
+        ((currentYearTotal - previousYearCount) / previousYearCount) * 100;
+    } else if (currentYearTotal > 0) {
+      yearlyGrowth = 100;
+    }
+
+    const monthlyStats = currentYearStats[0]?.months || [];
+
+    return {
+      monthlyStats,
+      yearlyGrowth: parseFloat(yearlyGrowth.toFixed(2)),
+  
+      year,
+    };
+  } catch (error: any) {
+    throw new AppError(
+      status.INTERNAL_SERVER_ERROR,
+      "Failed to fetch video creation stats",
+      error
+    );
+  }
+};
+
+
+
 const VideoFilesServices={
      uploadVideoFileIntoDb,
      findByAllVideoSocialFeedIntoDb,
      findMyAllVideoSocialFeedIntoDb,
-      deleteVideoFileIntoDb
+      deleteVideoFileIntoDb,
+      getVideoGrowthIntoDb
 };
 
 export default  VideoFilesServices;
