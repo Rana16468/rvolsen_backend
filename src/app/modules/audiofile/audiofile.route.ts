@@ -29,7 +29,7 @@ route.post(
   AudioFileController.uploadAudioFile
 );
 
-route.get("/find_by_all_audio", auth(USER_ROLE.user), AudioFileController.findByAllAudio);
+route.get("/find_by_all_audio", auth(USER_ROLE.user,USER_ROLE.admin), AudioFileController.findByAllAudio);
 
 route.delete("/delete_audio_file/:id", auth(USER_ROLE.admin), AudioFileController.deleteAudioFile);
 

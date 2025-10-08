@@ -66,8 +66,29 @@ const getVideoGrowth:RequestHandler=catchAsync(async(req , res)=>{
     message: "Successfully  Find Video Growth",
     data: result,
   });
+});
 
 
+const  findAllVideo:RequestHandler=catchAsync(async(req , res)=>{
+
+      const result=await VideoFilesServices. findAllVideoIntoDb(req.query);
+        sendResponse(res, {
+    success: true,
+    statusCode: status.OK,
+    message: "Successfully Find By All Video",
+    data: result,
+  });
+});
+
+const dashboardCount:RequestHandler=catchAsync(async(req , res)=>{
+
+      const result=await VideoFilesServices.dashboardCountIntoDb();
+              sendResponse(res, {
+    success: true,
+    statusCode: status.OK,
+    message: "Successfully  Find Total Count",
+    data: result,
+  });
 })
 
 const VideoFilesController={
@@ -75,7 +96,9 @@ const VideoFilesController={
     findByAllVideoSocialFeed,
     findMyAllVideoSocialFeed,
     deleteVideoFile,
-    getVideoGrowth
+    getVideoGrowth,
+     findAllVideo,
+     dashboardCount
     
 };
 

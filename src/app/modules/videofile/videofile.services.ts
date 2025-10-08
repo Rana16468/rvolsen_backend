@@ -5,7 +5,7 @@ import videofiles from "./videofile.model";
 import QueryBuilder from "../../builder/QueryBuilder";
 
 import fs from "fs";
-import mongoose from "mongoose";
+import users from "../user/user.model";
 
 const uploadVideoFileIntoDb=async( req:RequestWithFile,userId:string):Promise< VideoFileResponse >=>{
 
@@ -338,12 +338,66 @@ const getVideoGrowthIntoDb = async (query: { year?: string }) => {
 
 
 
+
+const findAllVideoIntoDb = async (query: Record<string, unknown>) => {
+  try {
+
+
+    const allVideoSocialFeedQuery = new QueryBuilder(
+      videofiles
+        .find() 
+        .populate([
+          {
+            path: 'userId',
+            select: 'name photo',
+          },
+        ])
+        .select('-isDelete -updatedAt -dislike -share')
+        .lean(),
+      query
+    ).search(['title createdAt'])
+      .filter() 
+      .sort()
+      .paginate()
+      .fields();
+
+    // Execute the query
+    const allVideos = await allVideoSocialFeedQuery.modelQuery;
+    const meta = await allVideoSocialFeedQuery.countTotal();
+
+    return { meta, allVideos };
+  } catch (error: any) {
+    throw new AppError(
+      status.INTERNAL_SERVER_ERROR,
+      'Error find By All Video Social Feed IntoDb',
+      error
+    );
+  }
+};
+
+
+
+
+const dashboardCountIntoDb=async()=>{
+
+      const totalUsers=await users.countDocuments();
+      const totalVideos=await videofiles.countDocuments();
+      return {
+        totalUsers, totalVideos
+      }
+}
+
+
+
+
 const VideoFilesServices={
      uploadVideoFileIntoDb,
      findByAllVideoSocialFeedIntoDb,
      findMyAllVideoSocialFeedIntoDb,
       deleteVideoFileIntoDb,
-      getVideoGrowthIntoDb
+      getVideoGrowthIntoDb,
+       findAllVideoIntoDb,
+        dashboardCountIntoDb
 };
 
 export default  VideoFilesServices;
