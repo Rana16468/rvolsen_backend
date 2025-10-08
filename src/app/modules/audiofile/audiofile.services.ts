@@ -108,13 +108,46 @@ const findByAllAudioIntoDb=async(query: Record<string, unknown>)=>{
       error
     );
   }
-}
+};
 
+
+const myRecordingSoundLibraryIntoDb=async(userId:string, query: Record<string, unknown>)=>{
+  try{
+
+             const myRecordingSoundQuery = new QueryBuilder(
+                  uploaduudios.find({userId}).populate([
+                   
+                ]).select("-userId -isDelete -updatedAt").lean(),
+              query     
+            )
+              .search([]) 
+              .filter()                          
+              .sort()                            
+              .paginate()                       
+              .fields(); 
+        
+            const myRecordLibrary= await myRecordingSoundQuery .modelQuery;
+            const meta = await myRecordingSoundQuery .countTotal();
+        
+            return { meta,  myRecordLibrary };
+
+    }
+
+    catch (error: any) {
+    throw new AppError(
+      status.INTERNAL_SERVER_ERROR,
+      "Error  my Recording Sound Library Into Db",
+      error
+    );
+  }
+     
+}
 
 const AudioFileServices={
     uploadAudioFileIntoDb,
     findByAllAudioIntoDb,
-     deleteAudioFileIntoDb
+     deleteAudioFileIntoDb,
+      myRecordingSoundLibraryIntoDb
 };
 
 export default AudioFileServices;

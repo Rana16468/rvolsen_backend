@@ -38,13 +38,26 @@ const  deleteAudioFile:RequestHandler=catchAsync(async(req , res)=>{
     message: "Successfully Delete Audio",
     data: result,
   });
+});
+
+
+const  myRecordingSoundLibrary:RequestHandler=catchAsync(async(req , res)=>{
+
+      const result=await AudioFileServices.myRecordingSoundLibraryIntoDb(req.user.id, req.query);
+                         sendResponse(res, {
+    success: true,
+    statusCode: status.OK,
+    message: "Successfully My Record Sound",
+    data: result,
+  });
 })
 
 
 const  AudioFileController={
     uploadAudioFile,
     findByAllAudio,
-     deleteAudioFile
+     deleteAudioFile,
+     myRecordingSoundLibrary
 };
 
 export default AudioFileController;

@@ -13,8 +13,8 @@ import AudioFileController from "./audiofile.controller";
 const route = express.Router();
 route.post(
   "/upload_audio_files",
-  auth(USER_ROLE.admin),
-  upload.array("files", 10), // ✅ multiple files upload (max 10)
+  auth(USER_ROLE.admin,USER_ROLE.user),
+  upload.array("files", 10),
   (req: Request, res: Response, next: NextFunction) => {
     try {
       if (req.body.data && typeof req.body.data === "string") {
@@ -32,6 +32,10 @@ route.post(
 route.get("/find_by_all_audio", auth(USER_ROLE.user), AudioFileController.findByAllAudio);
 
 route.delete("/delete_audio_file/:id", auth(USER_ROLE.admin), AudioFileController.deleteAudioFile);
+
+
+route.get("/find_my_all_record_sound", auth(USER_ROLE.user), AudioFileController.myRecordingSoundLibrary);
+
 
 
 
