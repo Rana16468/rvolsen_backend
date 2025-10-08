@@ -54,6 +54,7 @@ router.post(
   validationRequest(UserValidationSchema.createUserSchema),
   UserController.googleAuth
 );
+router.get("/find_by_user_growth", auth(USER_ROLE.admin, USER_ROLE.superAdmin), UserController.getUserGrowth);
 
 const UserRouters = router;
 export default UserRouters;

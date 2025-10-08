@@ -88,6 +88,19 @@ const googleAuth: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 
+
+const getUserGrowth: RequestHandler = catchAsync(async (req, res) => {
+
+  const result = await UserServices.getUserGrowthIntoDb(req.query);
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Successfully  Find User Growth",
+    data: result,
+  });
+
+});
+
 const UserController = {
   createUser,
   userVarification,
@@ -96,6 +109,7 @@ const UserController = {
   verificationForgotUser,
   resetPassword,
   googleAuth,
+  getUserGrowth
 };
 
 export default UserController;
