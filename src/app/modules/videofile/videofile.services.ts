@@ -78,14 +78,49 @@ const findByAllVideoSocialFeedIntoDb=async (query: Record<string, unknown>)=>{
       error
     );
   }
-
-
 }
+
+
+
+const findMyAllVideoSocialFeedIntoDb=async (query: Record<string, unknown>, userId:string)=>{
+  try{
+
+         const myVideoSocialFeedQuery = new QueryBuilder(
+                  videofiles.find({userId}).populate([
+      
+                ]).select(" -isDelete -updatedAt -userId -dislike -share").lean(),
+              query     
+            )
+              .search([]) 
+              .filter()                          
+              .sort()                            
+              .paginate()                       
+              .fields(); 
+        
+            const mysocialFeeds = await myVideoSocialFeedQuery .modelQuery;
+            const meta = await myVideoSocialFeedQuery .countTotal();
+        
+            return { meta, mysocialFeeds  };
+
+    }
+
+    catch (error: any) {
+    throw new AppError(
+      status.INTERNAL_SERVER_ERROR,
+      "Error find By All Video Social Feed IntoDb",
+      error
+    );
+  }
+};
+
+
+
 
 
 const VideoFilesServices={
      uploadVideoFileIntoDb,
-     findByAllVideoSocialFeedIntoDb
+     findByAllVideoSocialFeedIntoDb,
+     findMyAllVideoSocialFeedIntoDb
 };
 
 export default  VideoFilesServices;

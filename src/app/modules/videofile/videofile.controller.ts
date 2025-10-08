@@ -29,11 +29,24 @@ const  findByAllVideoSocialFeed:RequestHandler=catchAsync(async(req , res)=>{
     data: result,
   });
 
+});
+
+
+const findMyAllVideoSocialFeed:RequestHandler=catchAsync(async(req , res)=>{
+
+      const result=await VideoFilesServices.findMyAllVideoSocialFeedIntoDb(req.query, req.user.id);
+       sendResponse(res, {
+    success: true,
+    statusCode: status.OK,
+    message: "Successfully Find My All Video",
+    data: result,
+  });
 })
 
 const VideoFilesController={
     uploadVideoFile,
-    findByAllVideoSocialFeed
+    findByAllVideoSocialFeed,
+    findMyAllVideoSocialFeed
 };
 
 export default  VideoFilesController;

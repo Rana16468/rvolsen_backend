@@ -29,7 +29,7 @@ route.post(
 );
 
 route.get("/find_by_all_social_feed_video", auth(USER_ROLE.user), VideoFilesController.findByAllVideoSocialFeed)
-
+route.get("/find_myl_social_feed_video", auth(USER_ROLE.user),VideoFilesController.findMyAllVideoSocialFeed);
 
 const videoFileRoutes=route;
 
