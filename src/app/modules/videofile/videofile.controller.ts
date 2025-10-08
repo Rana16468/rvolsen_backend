@@ -41,12 +41,27 @@ const findMyAllVideoSocialFeed:RequestHandler=catchAsync(async(req , res)=>{
     message: "Successfully Find My All Video",
     data: result,
   });
+});
+
+
+const  deleteVideoFile:RequestHandler=catchAsync(async(req , res)=>{
+
+      const  result=await VideoFilesServices.deleteVideoFileIntoDb(req.params.id);
+      sendResponse(res, {
+    success: true,
+    statusCode: status.OK,
+    message: "Successfully  Delete Video",
+    data: result,
+  });
+
+
 })
 
 const VideoFilesController={
     uploadVideoFile,
     findByAllVideoSocialFeed,
-    findMyAllVideoSocialFeed
+    findMyAllVideoSocialFeed,
+    deleteVideoFile
 };
 
 export default  VideoFilesController;

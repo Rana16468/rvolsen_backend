@@ -4,6 +4,8 @@ import { RequestWithFile, VideoFileResponse } from "./videofile.interface";
 import videofiles from "./videofile.model";
 import QueryBuilder from "../../builder/QueryBuilder";
 
+import fs from "fs";
+
 const uploadVideoFileIntoDb=async( req:RequestWithFile,userId:string):Promise< VideoFileResponse >=>{
 
 
@@ -113,14 +115,40 @@ const findMyAllVideoSocialFeedIntoDb=async (query: Record<string, unknown>, user
   }
 };
 
+ const deleteVideoFileIntoDb = async (id: string) => {
+  try {
+    const isExist = await videofiles.findOne({ _id: id }).select("_id videoUrl");
 
+    if (!isExist) {
+      throw new AppError(status.NOT_FOUND, "Video not found");
+    }
 
+    const filePath = isExist.videoUrl
+;
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+    await videofiles.findByIdAndDelete(id);
+
+    return {
+      success: true,
+      message: "Successfully deleted audio",
+    };
+  } catch (error: any) {
+    throw new AppError(
+      status.INTERNAL_SERVER_ERROR,
+      "Error deleting audio file",
+      error
+    );
+  }
+};
 
 
 const VideoFilesServices={
      uploadVideoFileIntoDb,
      findByAllVideoSocialFeedIntoDb,
-     findMyAllVideoSocialFeedIntoDb
+     findMyAllVideoSocialFeedIntoDb,
+      deleteVideoFileIntoDb
 };
 
 export default  VideoFilesServices;
