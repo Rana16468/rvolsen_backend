@@ -26,7 +26,17 @@ export interface TReactDisLike {
 
 export interface DisLikeReactEventPostModel extends Model< TReactDisLike> {
   isDisLikeReactEventPostCustomId(id: string): Promise< TReactDisLike>;
-}
+};
+
+export interface TShareReact {
+        videofileId: Types.ObjectId;
+        userId:Types.ObjectId;
+        isDelete:Boolean;
+};
+
+export interface ShareReactEventPostModel extends Model< TShareReact> {
+  isTShareReactEventPostCustomId(id: string): Promise<TShareReact>;
+};
 
 
 

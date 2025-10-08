@@ -1,9 +1,9 @@
 import mongoose, { Types } from "mongoose";
-import { TReactDisLike, TReactLike } from "./react_event_post.interface";
+import { TReactDisLike, TReactLike, TShareReact } from "./react_event_post.interface";
 import videofiles from "../videofile/videofile.model";
 import AppError from "../../errors/AppError";
 import status from "http-status";
-import { reactdislikes, reactlikes } from "./react_event_post.model";
+import { reactdislikes, reactlikes, sharereacts } from "./react_event_post.model";
 
 const recordedReactEventPostIntoDb = async (
   payload: TReactLike,
@@ -156,9 +156,62 @@ const disLikeReactEventPostIntoDb = async (
     session.endSession();
   }
 };
+
+
+
+
+
+const shareReactEventPostIntoDb = async (
+  payload: TShareReact,
+  userId: string
+) => {
+  const session = await mongoose.startSession();
+
+  try {
+    await session.withTransaction(async () => {
+      const userObjectId = new Types.ObjectId(userId);
+      const eventPost = await videofiles
+        .findById(payload.videofileId)
+        .session(session);
+      if (!eventPost) {
+        throw new AppError(status.NOT_FOUND, "Video file not found", "");
+      }
+
+      await sharereacts.create(
+        [
+          {
+            videofileId: payload.videofileId,
+            userId: userObjectId,
+            isDelete: false,
+          },
+        ],
+        { session }
+      );
+      await videofiles.findByIdAndUpdate(
+        payload.videofileId,
+        { $inc: { share: 1 } },
+        { session }
+      );
+    });
+
+    return {
+      success: true,
+      message: "Share recorded successfully",
+    };
+  } catch (error: any) {
+    throw new AppError(
+      status.SERVICE_UNAVAILABLE,
+      "Service unavailable",
+      error
+    );
+  } finally {
+    session.endSession();
+  }
+};
 const ReactEventPostServices = {
   recordedReactEventPostIntoDb,
-  disLikeReactEventPostIntoDb
+  disLikeReactEventPostIntoDb,
+  shareReactEventPostIntoDb
 };
 
 export default ReactEventPostServices;

@@ -1,5 +1,5 @@
 import { Schema, model } from "mongoose";
-import { DisLikeReactEventPostModel, ReactEventPostModel, TReactDisLike, TReactLike } from "./react_event_post.interface";
+import { DisLikeReactEventPostModel, ReactEventPostModel, ShareReactEventPostModel, TReactDisLike, TReactLike, TShareReact } from "./react_event_post.interface";
 
 
 const TReactLikeSchema = new Schema<TReactLike, ReactEventPostModel>(
@@ -112,6 +112,61 @@ TReactDisLikeSchema.statics.isDisLikeReactEventPostCustomId = async function (
 export const reactdislikes = model<TReactDisLike, DisLikeReactEventPostModel>(
   "reactdislikes",
   TReactDisLikeSchema
+);
+
+
+
+
+
+const TShareReactSchema = new Schema<TShareReact, ShareReactEventPostModel>(
+  {
+    videofileId: {
+      type: Schema.Types.ObjectId,
+      required: true,
+      ref: "videofiles",
+    },
+    userId: {
+      type: Schema.Types.ObjectId,
+      required: true,
+      ref: "users",
+    },
+    isDelete: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  {
+    timestamps: true, 
+  }
+);
+
+
+TShareReactSchema.pre("find", function (next) {
+  this.find({ isDelete: { $ne: true } });
+  next();
+});
+
+TShareReactSchema.pre("findOne", function (next) {
+  this.findOne({ isDelete: { $ne: true } });
+  next();
+});
+
+TShareReactSchema.pre("aggregate", function (next) {
+  this.pipeline().unshift({ $match: { isDelete: { $ne: true } } });
+  next();
+});
+
+
+TShareReactSchema.statics.isTShareReactEventPostCustomId = async function (
+  id: string
+): Promise<TShareReact | null> {
+  return this.findById(id);
+};
+
+
+export const sharereacts= model<TShareReact, ShareReactEventPostModel>(
+  "sharereacts",
+  TShareReactSchema
 );
 
 

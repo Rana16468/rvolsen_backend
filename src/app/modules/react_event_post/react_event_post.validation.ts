@@ -17,11 +17,20 @@ const isDisLikeReactSchema=z.object({
     })
 });
 
+const isShareReactSchema=z.object({
+    body:z.object({
+
+        videofileId:z.string({error:"videofileId is  required"})
+    })
+});
+
 
 
 const ReactValidation={
     isLikeReactSchema,
-    isDisLikeReactSchema
+    isDisLikeReactSchema,
+    isShareReactSchema
+
 };
 
 

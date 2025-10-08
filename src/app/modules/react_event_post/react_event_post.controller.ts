@@ -28,11 +28,24 @@ const disLikeReactEventPost:RequestHandler=catchAsync(async(req , res)=>{
     data: result,
   });
 
+});
+
+
+const shareReactEventPost:RequestHandler=catchAsync(async(req , res)=>{
+
+      const  result=await ReactEventPostServices.shareReactEventPostIntoDb(req.body, req.user.id);
+          sendResponse(res, {
+         success: true,
+         statusCode: status.OK,
+         message: "Successfully Share ",
+        data: result,
+  });
 })
 
 const ReactEventPostController={
     recordedReactEventPost,
-    disLikeReactEventPost
+    disLikeReactEventPost,
+    shareReactEventPost
 };
 
 export default ReactEventPostController;

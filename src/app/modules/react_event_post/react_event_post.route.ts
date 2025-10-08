@@ -9,7 +9,7 @@ const route=express.Router();
 
 route.post("/isLikeReact", auth(USER_ROLE.user), validationRequest( ReactValidation.isLikeReactSchema),ReactEventPostController.recordedReactEventPost );
 route.post("/isDisLikeReact", auth(USER_ROLE.user), validationRequest(ReactValidation.isDisLikeReactSchema), ReactEventPostController.disLikeReactEventPost);
-
+route.post("/isShare",auth(USER_ROLE.user),validationRequest(ReactValidation.isShareReactSchema),ReactEventPostController.shareReactEventPost)
 
 
 const ReactEvents=route;
