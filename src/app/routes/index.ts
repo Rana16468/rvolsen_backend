@@ -3,6 +3,7 @@ import UserRouters from "../modules/user/user.route";
 import AuthRouter from "../modules/auth/auth.route";
 import SettingsRoutes from "../modules/settings/settings.routres";
 import audioRoutes from "../modules/audiofile/audiofile.route";
+import videoFileRoutes from "../modules/videofile/videofile.route";
 
 
 const router = express.Router();
@@ -23,6 +24,10 @@ const moduleRoutes = [
   {
     path:"/audio",
     route: audioRoutes
+  },
+  {
+    path:"/video",
+    route: videoFileRoutes
   }
 ];
 

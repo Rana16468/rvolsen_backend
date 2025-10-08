@@ -1,0 +1,34 @@
+import  express, { NextFunction, Request, Response } from 'express';
+import auth from '../../middlewares/auth';
+import { USER_ROLE } from '../user/user.constant';
+import upload from '../../utils/uploadFile';
+import AppError from '../../errors/AppError';
+import status from 'http-status';
+import validationRequest from '../../middlewares/validationRequest';
+import VideoFileValidation from './videofile.validation';
+import VideoFilesController from './videofile.controller';
+
+
+const route = express.Router();
+route.post(
+  "/upload_video_files",
+  auth(USER_ROLE.admin,USER_ROLE.user),
+  upload.array("files", 10),
+  (req: Request, res: Response, next: NextFunction) => {
+    try {
+      if (req.body.data && typeof req.body.data === "string") {
+        req.body = JSON.parse(req.body.data);
+      }
+      next();
+    } catch {
+      next(new AppError(status.BAD_REQUEST, "Invalid JSON data", ""));
+    }
+  },
+  validationRequest(  VideoFileValidation.createVideoFileZodSchema),
+  VideoFilesController.uploadVideoFile
+);
+
+
+const videoFileRoutes=route;
+
+export default videoFileRoutes;
