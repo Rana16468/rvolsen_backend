@@ -7,7 +7,10 @@ import config from "./app/config";
 import router from "./app/routes";
 import notFound from "./app/middlewares/notFound";
 import globalErrorHandelar from "./app/middlewares/globalErrorHandler";
-
+import cron from 'node-cron';
+import auto_delete_unverifyed_user from "./app/utils/auto_delete_unverifyed_user";
+import AppError from "./app/errors/AppError";
+import status from "http-status";
 declare global {
   namespace Express {
     interface Request {
@@ -48,6 +51,19 @@ app.get("/", (_req, res) => {
     status: true,
     message: "Welcome to Hide and Squeaks Server. It is running!",
   });
+});
+
+// auto_delete_unverifyed_user
+cron.schedule("*/30 * * * *", async () => {
+  try {
+    await auto_delete_unverifyed_user();
+  } catch (error: any) {
+    throw new AppError(
+      status.BAD_REQUEST,
+      "Issues in the notification cron job (every 30 minutes)",
+      error
+    );
+  }
 });
 
 // ======= API Routes =======

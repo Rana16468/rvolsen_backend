@@ -13,7 +13,7 @@ const TUserSchema = new Schema<TUser, UserModel>(
       type: String,
       required: [true, "Email is Required"],
       trim: true,
-      unique: true,
+      // unique: true,
       index:true
     },
     phoneNumber: {

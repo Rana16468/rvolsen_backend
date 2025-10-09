@@ -8,6 +8,7 @@ const TUploadAudioSchema = new Schema<TUploadAudio>(
       type: Schema.Types.ObjectId,
       ref: "users",
       required: true,
+      index:true
     },
     audioUrl: {
       type: String,

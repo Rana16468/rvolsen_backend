@@ -45,6 +45,7 @@ const createUserIntoDb = async (payload: TUser) => {
     const isExistUser = await users.findOne({
       email: payload?.email,
       isDelete: false,
+      isVerify:true
     });
 
     if (isExistUser) {
