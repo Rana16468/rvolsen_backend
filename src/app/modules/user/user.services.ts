@@ -18,10 +18,9 @@ const generateUniqueOTP = async (): Promise<number> => {
   const MAX_ATTEMPTS = 10;
 
   for (let i = 0; i < MAX_ATTEMPTS; i++) {
-    const otp = Math.floor(100000 + Math.random() * 900000);
+    const otp = Math.floor(1000 + Math.random() * 9000);
 
     const existingUser = await users.findOne({ verificationCode: otp });
-
     if (!existingUser) {
       return otp;
     }
@@ -29,10 +28,10 @@ const generateUniqueOTP = async (): Promise<number> => {
 
   throw new AppError(
     httpStatus.NOT_EXTENDED,
-    "Failed to generate a unique OTP after multiple attempts",
-    ""
+    "Failed to generate a unique OTP after multiple attempts"
   );
 };
+
 
 
 const createUserIntoDb = async (payload: TUser) => {
