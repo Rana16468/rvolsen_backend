@@ -7,8 +7,8 @@ const emailContext: EmailContextType = {
     if (!username || typeof username !== 'string') {
       throw new Error('Username must be a non-empty string');
     }
-    if (!otp || typeof otp !== 'number' || otp < 100000 || otp > 999999) {
-      throw new Error('OTP must be a 6-digit number');
+    if (!otp || typeof otp !== 'number' || otp < 1000 || otp > 9999) {
+      throw new Error('OTP must be a 4-digit number');
     }
     if (!subject || typeof subject !== 'string') {
       throw new Error('Subject must be a non-empty string');

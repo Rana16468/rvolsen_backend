@@ -14,6 +14,7 @@ import { USER_ACCESSIBILITY } from './user.constant';
 
 
 
+
 const generateUniqueOTP = async (): Promise<number> => {
   const MAX_ATTEMPTS = 10;
 
@@ -35,8 +36,7 @@ const generateUniqueOTP = async (): Promise<number> => {
 
 
 const createUserIntoDb = async (payload: TUser) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
+
 
   try {
     const otp = await generateUniqueOTP();
@@ -44,12 +44,12 @@ const createUserIntoDb = async (payload: TUser) => {
     const isExistUser = await users.findOne({
       email: payload?.email,
       isDelete: false,
-      isVerify:true
+      isVerify: true
     });
 
     if (isExistUser) {
       throw new AppError(
-        httpStatus.CONFLICT, // 409
+        httpStatus.CONFLICT,
         'This email already exists in our database',
         '',
       );
@@ -58,29 +58,37 @@ const createUserIntoDb = async (payload: TUser) => {
     payload.verificationCode = otp;
 
     const authBuilder = new users(payload);
-    const result = await authBuilder.save({ session });
-
-    await session.commitTransaction();
-    session.endSession();
-
-    // Send email AFTER successful commit
-    await sendEmail(
-      payload.email,
-      emailContext.sendVerificationData(
+    const result = await authBuilder.save();
+    if(result){
+          try {
+      await sendEmail(
         payload.email,
-        otp,
-        'User Verification Email',
-      ),
-      'Verification OTP Code',
-    );
+        emailContext.sendVerificationData(
+          payload.email,
+          otp,
+          'User Verification Email',
+        ),
+        'Verification OTP Code',
+      );
+    } catch (emailError) {
+      // Log email error but don't fail the entire operation
+      console.error('Failed to send verification email:', emailError);
+      // Optionally: Queue email for retry, or handle differently
+    }
+    }
 
-    return { status: true, message: 'Check your email inbox for verification code' };
+
+
+
+    return { 
+      status: true, 
+      message: 'Check your email inbox for verification code' 
+    };
+
   } catch (error: any) {
-    await session.abortTransaction();
-    session.endSession();
 
     if (error instanceof AppError) {
-      throw error; // preserve custom error
+      throw error;
     }
 
     throw new AppError(
@@ -90,6 +98,8 @@ const createUserIntoDb = async (payload: TUser) => {
     );
   }
 };
+
+
 
 
 const userVarificationIntoDb = async (verificationCode: number) => {

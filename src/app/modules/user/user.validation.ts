@@ -111,7 +111,7 @@ const verificationCodeSchema = z.object({
   body: z.object({
     verificationCode: z
       .number({ error: " verificationCode is require" })
-      .min(6, { message: "min 5  number accepted" }),
+      .min(4, { message: "min 4  number accepted" }),
   }),
 });
 
