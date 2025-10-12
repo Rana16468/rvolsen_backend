@@ -11,6 +11,8 @@
 - ESLint and Prettier integrated
 - Pre-configured for modern Node (ESNext, nodenext modules)
 - Ready for API development (CORS, error handling, basic structure)
+- node mailer for email  sending 
+
 
 ## Getting Started
 
