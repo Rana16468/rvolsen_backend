@@ -140,7 +140,7 @@ const myprofileIntoDb = async (id: string) => {
   try {
     return await users
       .findById(id)
-      .select("name email phoneNumber dateOfBirth photo");
+      .select("name email phoneNumber dateOfBirth photo location");
   } catch (error: any) {
     throw new AppError(
       httpStatus.SERVICE_UNAVAILABLE,
