@@ -33,7 +33,8 @@ route.get("/find_myl_social_feed_video", auth(USER_ROLE.user),VideoFilesControll
 route.delete("/delete_video_file/:id", auth(USER_ROLE.user,USER_ROLE.admin,USER_ROLE.superAdmin), VideoFilesController.deleteVideoFile);
 route.get("/find_by_video_growth", auth(USER_ROLE.admin, USER_ROLE.superAdmin), VideoFilesController.getVideoGrowth);
 route.get("/find_all_video", auth(USER_ROLE.admin,USER_ROLE.superAdmin),VideoFilesController.findAllVideo);
-route.get("/dashboard_count", auth(USER_ROLE.admin,USER_ROLE.superAdmin), VideoFilesController.dashboardCount)
+route.get("/dashboard_count", auth(USER_ROLE.admin,USER_ROLE.superAdmin), VideoFilesController.dashboardCount);
+route.get("/specific_user_video_feed/:userId", auth(USER_ROLE.user), VideoFilesController. specificUserVideoFeed)
 
 const videoFileRoutes=route;
 

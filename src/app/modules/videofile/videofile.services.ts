@@ -128,6 +128,7 @@ const findByAllVideoSocialFeedIntoDb = async (query: Record<string, unknown>) =>
           share: 1,
           "user.name": 1,
           "user.photo": 1,
+          "user._id":1,
           isLike: 1,
           isDislike: 1,
         },
@@ -380,12 +381,51 @@ const findAllVideoIntoDb = async (query: Record<string, unknown>) => {
 
 const dashboardCountIntoDb=async()=>{
 
-      const totalUsers=await users.countDocuments();
+     try{
+       const totalUsers=await users.countDocuments();
       const totalVideos=await videofiles.countDocuments();
       return {
         totalUsers, totalVideos
       }
+
+     }
+     catch(error:any){
+    throw new AppError(
+      status.INTERNAL_SERVER_ERROR,
+      'Error  dashboard Count Into Db',
+      error
+    );
+     }
+};
+
+
+const specificUserVideoFeedIntoDb=async(query: Record<string, unknown>, userId:string)=>{
+ const allVideoSocialFeedQuery = new QueryBuilder(
+      videofiles
+        .find({userId}) 
+        .populate([
+          {
+            path: 'userId',
+            select: 'name photo',
+          },
+        ])
+        .select('-isDelete -updatedAt -dislike -share')
+        .lean(),
+      query
+    ).search(['title createdAt'])
+      .filter() 
+      .sort()
+      .paginate()
+      .fields();
+
+    // Execute the query
+    const allVideos = await allVideoSocialFeedQuery.modelQuery;
+    const meta = await allVideoSocialFeedQuery.countTotal();
+
+    return { meta, allVideos };
+     
 }
+
 
 
 
@@ -397,7 +437,8 @@ const VideoFilesServices={
       deleteVideoFileIntoDb,
       getVideoGrowthIntoDb,
        findAllVideoIntoDb,
-        dashboardCountIntoDb
+        dashboardCountIntoDb,
+        specificUserVideoFeedIntoDb
 };
 
 export default  VideoFilesServices;

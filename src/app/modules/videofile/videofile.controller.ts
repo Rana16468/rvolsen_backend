@@ -89,6 +89,18 @@ const dashboardCount:RequestHandler=catchAsync(async(req , res)=>{
     message: "Successfully  Find Total Count",
     data: result,
   });
+});
+
+const specificUserVideoFeed:RequestHandler=catchAsync(async(req , res)=>{
+
+     const  result=await VideoFilesServices. specificUserVideoFeedIntoDb(req.query, req.params.userId);
+      sendResponse(res, {
+    success: true,
+    statusCode: status.OK,
+    message: "Successfully Find By Feed",
+    data: result,
+  });
+
 })
 
 const VideoFilesController={
@@ -98,7 +110,8 @@ const VideoFilesController={
     deleteVideoFile,
     getVideoGrowth,
      findAllVideo,
-     dashboardCount
+     dashboardCount,
+     specificUserVideoFeed
     
 };
 
