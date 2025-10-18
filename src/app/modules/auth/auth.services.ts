@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-import httpStatus from "http-status";
+import httpStatus, { status } from "http-status";
 import users from "../user/user.model";
 import { USER_ACCESSIBILITY } from "../user/user.constant";
 import AppError from "../../errors/AppError";
@@ -9,6 +9,7 @@ import config from "../../config";
 import { ProfileUpdateResponse, RequestWithFile } from "./auth.interface";
 import QueryBuilder from "../../builder/QueryBuilder";
 import { user_search_filed } from "./auth.constant";
+import { TUser } from "../user/user.interface";
 
 
 
@@ -281,29 +282,36 @@ const deleteAccountIntoDb = async (id: string) => {
 
 const isBlockAccountIntoDb = async (
   id: string,
-  payload: { status: boolean }
+  payload: Partial<TUser>
 ) => {
+ 
 
   try {
-    const status = payload?.status
-      ? USER_ACCESSIBILITY.isProgress
-      : USER_ACCESSIBILITY.blocked;
-
+    // Update user status
     const result = await users.findByIdAndUpdate(
       id,
-      { status: status },
-      { new: true, upsert: true }
+      { status: payload.status },
+      { new: true } 
     );
 
-    return result ? { status: true, message: `successfully ${status} ` } : "";
+    if (!result) {
+      throw new AppError(httpStatus.NOT_FOUND, "User not found");
+    }
+
+    return {
+      success: true,
+      message: `User successfully ${payload.status}`,
+  
+    };
   } catch (error: any) {
     throw new AppError(
       httpStatus.SERVICE_UNAVAILABLE,
-      " is block account into db server unavailable",
+      "Block account operation failed",
       error
     );
   }
 };
+
 
 
 

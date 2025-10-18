@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { USER_ACCESSIBILITY } from "../user/user.constant";
 
 const LoginSchema = z.object({
   body: z.object({
@@ -57,7 +58,12 @@ const changeMyProfileSchema = z.object({
 
 const changeUserAccountStatus = z.object({
   body: z.object({
-    status: z.boolean(),
+    status: z
+    .enum([
+      USER_ACCESSIBILITY.isProgress,
+      USER_ACCESSIBILITY.blocked,
+    ])
+   
   }),
 });
 
