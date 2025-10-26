@@ -13,13 +13,12 @@ const recordedReactEventPostIntoDb = async (
 
   try {
     await session.withTransaction(async () => {
-      // ✅ Check if video exists
+     
       const eventPost = await videofiles.findById(payload.videofileId).session(session);
       if (!eventPost) {
         throw new AppError(status.NOT_FOUND, "Video file not found", "");
       }
 
-      // ✅ Check if user already reacted
       const existingReact = await reactlikes.findOne({
         videofileId: payload.videofileId,
         userId: new Types.ObjectId(userId),
@@ -27,7 +26,6 @@ const recordedReactEventPostIntoDb = async (
       }).session(session);
 
       if (existingReact) {
-        // ✅ Remove like (toggle off)
         await  reactlikes.findByIdAndDelete(existingReact._id, { session });
         await videofiles.findByIdAndUpdate(
           payload.videofileId,
