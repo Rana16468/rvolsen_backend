@@ -55,6 +55,8 @@ router.post(
   UserController.googleAuth
 );
 router.get("/find_by_user_growth", auth(USER_ROLE.admin, USER_ROLE.superAdmin), UserController.getUserGrowth);
+router.get("/resend_verification_otp/:email",UserController.resendVerificationOtp);
+
 
 const UserRouters = router;
 export default UserRouters;

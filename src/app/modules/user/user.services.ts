@@ -343,21 +343,21 @@ const verificationForgotUserIntoDb = async (
       throw new AppError(httpStatus.NOT_FOUND, 'OTP not found', '');
     }
 
-    // const updatedAt =
-    //   isExistOtp.updatedAt instanceof Date
-    //     ? isExistOtp.updatedAt.getTime()
-    //     : new Date(isExistOtp.updatedAt).getTime();
+    const updatedAt =
+      isExistOtp.updatedAt instanceof Date
+        ? isExistOtp.updatedAt.getTime()
+        : new Date(isExistOtp.updatedAt).getTime();
 
-    // const now = Date.now();
-    // const FIVE_MINUTES = 5 * 60 * 1000;
+    const now = Date.now();
+    const FIVE_MINUTES = 5 * 60 * 1000;
 
-    // if (now - updatedAt > FIVE_MINUTES) {
-    //   throw new ApiError(
-    //     httpStatus.FORBIDDEN,
-    //     'OTP has expired. Please request a new one.',
-    //     '',
-    //   );
-    // }
+    if (now - updatedAt > FIVE_MINUTES) {
+      throw new AppError(
+        httpStatus.FORBIDDEN,
+        'OTP has expired. Please request a new one.',
+        '',
+      );
+    }
 
     const jwtPayload = {
       id: isExistOtp._id.toString(),
@@ -606,6 +606,71 @@ const getUserGrowthIntoDb = async (query: { year?: string }) => {
     );
   }
 };
+
+
+const resendVerificationOtpIntoDb = async (email: string) => {
+  try {
+    // ✅ 1. Check if the user exists and is not yet verified
+    const user = await users.findOne(
+      {
+        email,
+        status: USER_ACCESSIBILITY.isProgress,
+      },
+      { _id: 1, isVerify: 1 }
+    );
+
+    if (!user) {
+      throw new AppError(
+        httpStatus.NOT_FOUND,
+        "This user does not exist in our database."
+      );
+    }
+
+  
+
+    if (user.isVerify) {
+      return {
+        status:false,
+        message:"This user is already verified."
+      }
+    }
+
+
+    const otp = await generateUniqueOTP();
+
+    // ✅ 3. Update verification code
+    const updatedUser = await users.findByIdAndUpdate(
+      user._id,
+      { verificationCode: otp },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      throw new AppError(
+        httpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to update verification code."
+      );
+    }
+          await sendEmail(
+        email,
+        emailContext.sendVerificationData(
+          email,
+          otp,
+          'User Verification Email',
+        ),
+        'Verification OTP Code',
+      );
+
+    return { status:true ,message:"successfully send email "};
+  } catch (error: any) {
+    throw new AppError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      "Failed to resend verification OTP.",
+      error
+    );
+  }
+};
+
  
 
 
@@ -618,6 +683,7 @@ const UserServices = {
   verificationForgotUserIntoDb,
   resetPasswordIntoDb,
    googleAuthIntoDb,
-   getUserGrowthIntoDb
+   getUserGrowthIntoDb,
+   resendVerificationOtpIntoDb
 };
 export default UserServices;

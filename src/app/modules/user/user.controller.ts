@@ -101,6 +101,19 @@ const getUserGrowth: RequestHandler = catchAsync(async (req, res) => {
 
 });
 
+
+const resendVerificationOtp:RequestHandler=catchAsync(async(req , res)=>{
+
+     const result=await UserServices.resendVerificationOtpIntoDb(req.params.email);
+      sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Successfully  Resend Verification OTP",
+      data: result,
+  });
+});
+
+
 const UserController = {
   createUser,
   userVarification,
@@ -109,7 +122,8 @@ const UserController = {
   verificationForgotUser,
   resetPassword,
   googleAuth,
-  getUserGrowth
+  getUserGrowth,
+  resendVerificationOtp
 };
 
 export default UserController;

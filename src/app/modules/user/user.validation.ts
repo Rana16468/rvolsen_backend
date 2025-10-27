@@ -123,6 +123,13 @@ const resetPasswordSchema = z.object({
 });
 
 
+const resendVerificationEmailSchema=z.object({
+  body:z.object({
+    email: z.email({error:"email is required"})
+  })
+})
+
+
 const UserValidationSchema={
     createUserSchema,
      UserVerification,
@@ -130,7 +137,8 @@ const UserValidationSchema={
      UpdateUserProfileSchema,
       ForgotPasswordSchema,
       verificationCodeSchema,
-      resetPasswordSchema
+      resetPasswordSchema,
+      resendVerificationEmailSchema
 };
 
 export default UserValidationSchema
