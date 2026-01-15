@@ -4,7 +4,11 @@ import { RequestWithFile, UploadAudioResponse } from "./audiofile.interface";
 import uploaduudios from "./audiofile.model";
 import QueryBuilder from "../../builder/QueryBuilder";
 
-import fs from "fs";
+import fs from "fs/promises";
+import path from "path";
+import config from "../../config";
+import { uploadToS3 } from "../../utils/uploadToS3";
+import { deleteFromS3 } from "../../utils/deleteFromS3";
 
 const uploadAudioFileIntoDb=async( req:RequestWithFile,userId:string):Promise< UploadAudioResponse >=>{
 
@@ -18,7 +22,10 @@ const uploadAudioFileIntoDb=async( req:RequestWithFile,userId:string):Promise< U
 
     const uploadedAudios = await Promise.all(
       files.map(async (file:any) => {
-        const audioUrl = file.path.replace(/\\/g, "/");
+        // const audioUrl = file.path.replace(/\\/g, "/");
+        const audioUrl = await uploadToS3(file, config.file_path);
+        // upload audio file 
+        //  updateData.photo = await uploadToS3(file, config.file_path);
         return await  uploaduudios.create({
           userId,
           audioUrl,
@@ -80,31 +87,45 @@ const findByAllAudioIntoDb=async(query: Record<string, unknown>)=>{
 }
 
 
- const deleteAudioFileIntoDb = async (id: string) => {
+const deleteAudioFileIntoDb = async (id: string) => {
   try {
-    const isExist = await uploaduudios.findOne({ _id: id }).select("_id audioUrl");
+    const audio = await uploaduudios
+      .findById(id)
+      .select("audioUrl")
+      .lean();
 
-    if (!isExist) {
+    if (!audio?.audioUrl) {
       throw new AppError(status.NOT_FOUND, "Audio not found");
     }
 
-    // Delete file from filesystem
-    const filePath = isExist.audioUrl;
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    const audioUrl = audio.audioUrl;
+
+    // Delete from S3 (if using S3)
+    const isAudioDelete=await deleteFromS3(audioUrl);
+
+    if(!isAudioDelete){
+      throw  new AppError(status.NOT_EXTENDED, 'issues by the audio file delete section')
+    };
+    // Delete from local filesystem (if stored locally)
+    const localPath = path.resolve(audioUrl);
+    try {
+      await fs.access(localPath);
+      await fs.unlink(localPath);
+    } catch {
+      // Ignore if file does not exist locally
     }
 
-    // Optionally remove from DB
+    // Remove from DB
     await uploaduudios.findByIdAndDelete(id);
 
     return {
       success: true,
-      message: "Successfully deleted audio",
+      message: "Audio deleted successfully",
     };
-  } catch (error: any) {
+  } catch (error:any) {
     throw new AppError(
       status.INTERNAL_SERVER_ERROR,
-      "Error deleting audio file",
+      "Failed to delete audio file",
       error
     );
   }
