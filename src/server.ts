@@ -18,7 +18,7 @@ async function main() {
 
     server = app.listen(config.port, () => {
       // console.log(`navuboy app listening on port ${config.port}`);
-      console.log(`hide and squeaks listening http://${config.host}:${config.port}`)
+      console.log(`hide and squeaks listening http://${`localhost`}:${config.port}`)
     });
 
     process.on('unhandledRejection', () => {
