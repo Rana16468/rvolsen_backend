@@ -10,11 +10,15 @@ import { ProfileUpdateResponse, RequestWithFile } from "./auth.interface";
 import QueryBuilder from "../../builder/QueryBuilder";
 import { user_search_filed } from "./auth.constant";
 import { TUser } from "../user/user.interface";
-import { reactdislikes, reactlikes, sharereacts } from "../react_event_post/react_event_post.model";
-import uploaduudios from "../audiofile/audiofile.model";
-import videofiles from "../videofile/videofile.model";
-import { uploadToS3 } from "../../utils/uploadToS3";
 
+import uploaduudios from "../audiofile/audiofile.model";
+
+import { uploadToS3 } from "../../utils/uploadToS3";
+import { deleteFromS3 } from "../../utils/deleteFromS3";
+import fs from "fs/promises";
+import path from "path";
+import videofiles from "../videofile/videofile.model";
+import { reactdislikes, reactlikes, sharereacts } from "../react_event_post/react_event_post.model";
 
 
 const loginUserIntoDb = async (payload: {
@@ -258,45 +262,92 @@ const findByAllUsersAdminIntoDb = async (query: Record<string, unknown>) => {
   }
 };
 
-const deleteAccountIntoDb = async (id: string) => {
+const deleteLocalFile = async (filePath?: string) => {
+  if (!filePath) return;
   try {
-    const isExist = await users.exists({
-      _id: id,
-      isDelete: false,
-      isVerify: true,
-      status: USER_ACCESSIBILITY.isProgress,
-    });
+    const localPath = path.resolve(filePath);
+    await fs.access(localPath);
+    await fs.unlink(localPath);
+  } catch {
+    // ignore if not exists
+  }
+};
 
-    if (!isExist) {
-      throw new AppError(
-        httpStatus.NOT_FOUND,
-        "User not found or already deleted."
-      );
+const deleteAccountIntoDb = async (userId: string) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const user = await users.findOne(
+      {
+        _id: userId,
+        isDelete: false,
+        isVerify: true,
+        status: USER_ACCESSIBILITY.isProgress,
+      },
+      null,
+      { session }
+    ).lean();
+
+    if (!user) {
+      throw new AppError(httpStatus.NOT_FOUND, "User not found");
     }
 
+    /* ---------- Collect file paths BEFORE delete ---------- */
+    const audios = await uploaduudios
+      .find({ userId })
+      .select("audioUrl")
+      .lean();
+
+    const videos = await videofiles
+      .find({ userId })
+      .select("videoUrl")
+      .lean();
+
+    const userPhoto = user.photo as any;
+
+    /* ---------- DB DELETE (TRANSACTION SAFE) ---------- */
     await Promise.all([
-      reactlikes.deleteMany({ userId: id }),
-      reactdislikes.deleteMany({ userId: id }),
-      sharereacts.deleteMany({ userId: id }),
-      uploaduudios.deleteMany({ userId: id }),
-      videofiles.deleteMany({ userId: id }),
+      reactlikes.deleteMany({ userId }, { session }),
+      reactdislikes.deleteMany({ userId }, { session }),
+      sharereacts.deleteMany({ userId }, { session }),
+      uploaduudios.deleteMany({ userId }, { session }),
+      videofiles.deleteMany({ userId }, { session }),
+      users.deleteOne({ _id: userId }, { session }),
     ]);
 
-    await users.findByIdAndDelete(id);
+    /* ---------- COMMIT DB ---------- */
+    await session.commitTransaction();
+    session.endSession();
+
+    /* ---------- FILE DELETE (POST-COMMIT) ---------- */
+    await Promise.all([
+      ...audios.map(a => deleteFromS3(a.audioUrl)),
+      ...videos.map(v => deleteFromS3(v.videoUrl)),
+      deleteFromS3(userPhoto),
+    ]);
+
+    await Promise.all([
+      ...audios.map(a => deleteLocalFile(a.audioUrl)),
+      ...videos.map(v => deleteLocalFile(v.videoUrl)),
+      deleteLocalFile(userPhoto),
+    ]);
 
     return {
       success: true,
-      message: "User account and related data successfully deleted.",
+      message: "Account deleted successfully (transaction-safe)",
     };
+  } catch (error:any) {
+    await session.abortTransaction();
+    session.endSession();
 
-  } catch (error: any) {
     throw new AppError(
       httpStatus.SERVICE_UNAVAILABLE,
-      "Server error while deleting account.",
+      "Account deletion failed, transaction rolled back",
       error
     );
   }
-};0
+};
 
 const isBlockAccountIntoDb = async (
   id: string,

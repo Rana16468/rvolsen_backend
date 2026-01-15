@@ -43,7 +43,10 @@ app.use(
 
 
 // ======= CORS =======
-app.use(cors());
+app.use(cors({
+     origin: '*',
+     credentials: true
+}));
 
 // ======= Test Route =======
 app.get("/", (_req, res) => {

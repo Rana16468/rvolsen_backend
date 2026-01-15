@@ -37,10 +37,6 @@ route.delete("/delete_audio_file/:id", auth(USER_ROLE.admin, USER_ROLE.user
 
 route.get("/find_my_all_record_sound", auth(USER_ROLE.user), AudioFileController.myRecordingSoundLibrary);
 
-
-
-
-
 const audioRoutes=route;
 export default audioRoutes;
 
