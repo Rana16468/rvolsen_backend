@@ -11,6 +11,7 @@ import auth from "../../middlewares/auth";
 import upload from "../../utils/uploadFile";
 import AppError from "../../errors/AppError";
 
+
 const router = express.Router();
 
 router.post(
@@ -81,6 +82,7 @@ router.patch(
   validationRequest(LoginValidationSchema.changeUserAccountStatus),
   AuthController.isBlockAccount
 );
+
 
 const AuthRouter = router;
 export default AuthRouter;

@@ -10,6 +10,10 @@ import { ProfileUpdateResponse, RequestWithFile } from "./auth.interface";
 import QueryBuilder from "../../builder/QueryBuilder";
 import { user_search_filed } from "./auth.constant";
 import { TUser } from "../user/user.interface";
+import { reactdislikes, reactlikes, sharereacts } from "../react_event_post/react_event_post.model";
+import uploaduudios from "../audiofile/audiofile.model";
+import videofiles from "../videofile/videofile.model";
+import { uploadToS3 } from "../../utils/uploadToS3";
 
 
 
@@ -187,7 +191,8 @@ const changeMyProfileIntoDb = async (
     }
   
     if (file) {
-      updateData.photo = file?.path?.replace(/\\/g, "/");
+      // updateData.photo = file?.path?.replace(/\\/g, "/");
+      updateData.photo = await uploadToS3(file, config.file_path);
     }
 
     if (Object.keys(updateData).length === 0) {
@@ -209,7 +214,7 @@ const changeMyProfileIntoDb = async (
 
     if (!result) {
       throw new AppError(httpStatus.NOT_FOUND, "User not found", "");
-    }
+    };
 
     return {
       status: true,
@@ -261,31 +266,43 @@ const deleteAccountIntoDb = async (id: string) => {
       isVerify: true,
       status: USER_ACCESSIBILITY.isProgress,
     });
+
     if (!isExist) {
       throw new AppError(
         httpStatus.NOT_FOUND,
-        "issues by the delete account section data not founded",
-        ""
+        "User not found or already deleted."
       );
     }
-    // started delete account and  related data
 
-    return isExist._id;
+    await Promise.all([
+      reactlikes.deleteMany({ userId: id }),
+      reactdislikes.deleteMany({ userId: id }),
+      sharereacts.deleteMany({ userId: id }),
+      uploaduudios.deleteMany({ userId: id }),
+      videofiles.deleteMany({ userId: id }),
+    ]);
+
+    await users.findByIdAndDelete(id);
+
+    return {
+      success: true,
+      message: "User account and related data successfully deleted.",
+    };
+
   } catch (error: any) {
     throw new AppError(
       httpStatus.SERVICE_UNAVAILABLE,
-      "delete Account Into Db server unavailable",
+      "Server error while deleting account.",
       error
     );
   }
-};
+};0
 
 const isBlockAccountIntoDb = async (
   id: string,
   payload: Partial<TUser>
 ) => {
  
-
   try {
     // Update user status
     const result = await users.findByIdAndUpdate(
