@@ -3,49 +3,51 @@ import AppError from "../../errors/AppError";
 import { RequestWithFile, VideoFileResponse } from "./videofile.interface";
 import videofiles from "./videofile.model";
 import QueryBuilder from "../../builder/QueryBuilder";
-
-import fs from "fs";
+import fs from "fs/promises";
+import path from "path";
 import users from "../user/user.model";
+import { uploadToS3 } from "../../utils/uploadToS3";
+import config from "../../config";
+import { deleteFromS3 } from "../../utils/deleteFromS3";
 
-const uploadVideoFileIntoDb=async( req:RequestWithFile,userId:string):Promise< VideoFileResponse >=>{
+const uploadVideoFileIntoDb = async (
+  req: RequestWithFile,
+  userId: string
+): Promise<VideoFileResponse> => {
+  try {
+    const files = req.files as Express.Multer.File[];
+    const payload = req.body;
 
-
-    try {
-    const files = req.files   as Express.Multer.File[];
-
-    const data= req.body;
-
-    if (!files || files.length === 0) {
-      throw new AppError(status.BAD_REQUEST, "No audio files uploaded", "");
+    if (!files?.length) {
+      throw new AppError(
+        status.BAD_REQUEST,
+        "No video files uploaded"
+      );
     }
 
-    const uploadedVideo = await Promise.all(
-      files.map(async (file:any) => {
-        const videoUrl = file.path.replace(/\\/g, "/");
-        return await  videofiles.create({
+    await Promise.all(
+      files.map(async (file) => {
+        const videoUrl = await uploadToS3(file, config.file_path);
+
+        await videofiles.create({
           userId,
           videoUrl,
-          ...data
-         
+          ...payload,
         });
       })
     );
 
-    if(!uploadedVideo){
-        throw new AppError(status.NOT_EXTENDED ,'issues by the  upload video server section ', '')
-    };
     return {
-        status:true,
-        message:"successfully  recorded"
-    }
-  } catch (error: any) {
+      status: true,
+      message: "Videos uploaded successfully",
+    };
+  } catch (error:any) {
     throw new AppError(
       status.INTERNAL_SERVER_ERROR,
-      "Error uploading multiple video files",
+      "Error uploading video files",
       error
     );
   }
-     
 };
 
 
@@ -203,27 +205,46 @@ const findMyAllVideoSocialFeedIntoDb=async (query: Record<string, unknown>, user
 
  const deleteVideoFileIntoDb = async (id: string) => {
   try {
-    const isExist = await videofiles.findOne({ _id: id }).select("_id videoUrl");
+    const video = await videofiles
+      .findById(id)
+      .select("videoUrl")
+      .lean();
 
-    if (!isExist) {
+    if (!video?.videoUrl) {
       throw new AppError(status.NOT_FOUND, "Video not found");
     }
 
-    const filePath = isExist.videoUrl
-;
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    const videoUrl = video.videoUrl;
+
+    // Delete from S3
+    const isDeletedFromS3 = await deleteFromS3(videoUrl);
+    if (!isDeletedFromS3) {
+      throw new AppError(
+        status.BAD_GATEWAY,
+        "Failed to delete video from S3"
+      );
     }
+
+    // Delete from local filesystem (if exists)
+    try {
+      const localPath = path.resolve(videoUrl);
+      await fs.access(localPath);
+      await fs.unlink(localPath);
+    } catch {
+      // Ignore if file doesn't exist locally
+    }
+
+    // Delete DB record
     await videofiles.findByIdAndDelete(id);
 
     return {
       success: true,
-      message: "Successfully deleted audio",
+      message: "Video deleted successfully",
     };
-  } catch (error: any) {
+  } catch (error:any) {
     throw new AppError(
       status.INTERNAL_SERVER_ERROR,
-      "Error deleting audio file",
+      "Error deleting video file",
       error
     );
   }
