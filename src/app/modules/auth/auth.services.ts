@@ -277,6 +277,8 @@ const deleteAccountIntoDb = async (userId: string) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
+  
+
   try {
     const user = await users.findOne(
       {
