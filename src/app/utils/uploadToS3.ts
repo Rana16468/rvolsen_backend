@@ -4,7 +4,6 @@ import AppError from "../errors/AppError";
 import status from "http-status";
 import config from "../config";
 
-// ✅ Create S3 client (NO ACL here)
 export const s3 = new S3Client({
   region: config.s3_bucket.aws_bucket_region,
   credentials: {
@@ -27,7 +26,7 @@ export const uploadToS3 = async (
     throw new AppError(status.NOT_FOUND, "File not found on server");
   }
 
-  // ✅ clean folder path
+ 
   folder = folder.replace(/^\/+|\/+$/g, "");
 
   const fileStream = fs.createReadStream(filePath);
@@ -36,28 +35,23 @@ export const uploadToS3 = async (
     .replace(/\s+/g, "-")
     .toLowerCase()}`;
 
-  // 🔍 Debug (remove in production)
-  console.log("S3 Bucket:", config.s3_bucket.aws_bucket_name);
-  console.log("S3 Region:", config.s3_bucket.aws_bucket_region);
-
   const params = {
-    Bucket: config.s3_bucket.aws_bucket_name, // MUST exist
+    Bucket: config.s3_bucket.aws_bucket_name, 
     Key: fileName,
     Body: fileStream,
     ContentType: file.mimetype,
-    ACL: "public-read", // ✅ correct place
+    ACL: "public-read", 
   } as any;
 
   try {
     await s3.send(new PutObjectCommand(params));
 
-    // ✅ remove local file after upload
+
     fs.unlinkSync(filePath);
 
-    // ✅ correct public URL
     return `https://${config.s3_bucket.aws_bucket_name}.s3.${config.s3_bucket.aws_bucket_region}.amazonaws.com/${fileName}`;
   } catch (error) {
-    console.error("S3 Upload Error:", error);
+    // console.error("S3 Upload Error:", error);
 
     throw new AppError(
       status.INTERNAL_SERVER_ERROR,

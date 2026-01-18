@@ -10,7 +10,7 @@ const generateToken = (
 };
 
 const verifyToken = (token: string, secret: string): JwtPayload => {
-      console.log("secret",{token,secret});
+      // console.log("secret",{token,secret});
   return jwt.verify(token, secret) as JwtPayload;
 };
 
