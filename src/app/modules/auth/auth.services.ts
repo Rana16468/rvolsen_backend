@@ -177,6 +177,9 @@ const changeMyProfileIntoDb = async (
    
     };
 
+
+    const isExistPhoto=await  users.findById(id).select("photo")
+
     const updateData: {
       name?: string;
       photo?: string;
@@ -196,7 +199,19 @@ const changeMyProfileIntoDb = async (
   
     if (file) {
       // updateData.photo = file?.path?.replace(/\\/g, "/");
+
+      if( isExistPhoto?.photo)
+
+      {
+
+       
+       await deleteFromS3(isExistPhoto?.photo);
+      
+      }
+
+    
       updateData.photo = await uploadToS3(file, config.file_path);
+    
     }
 
     if (Object.keys(updateData).length === 0) {
