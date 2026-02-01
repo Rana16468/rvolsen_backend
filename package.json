@@ -7,13 +7,13 @@
     "ts-express-kit": "./dist/bin/cli.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "node init && tsc",
     "lint": "eslint src --ignore-path .eslintignore --ext .ts",
     "lint:fix": "npx eslint src --fix",
     "prettier": "prettier --ignore-path .gitignore --write \"./src/**/*.+(js|ts|json)\"",
     "prettier:fix": "npx prettier --write src",
-    "dev": "ts-node-dev --respawn --transpile-only ./src/server.ts",
-    "start": "node ./dist/src/server.js",
+    "dev": "node init && ts-node-dev --respawn --transpile-only ./src/server.ts",
+    "start": "node init && node ./dist/src/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -41,6 +41,7 @@
     "mongoose": "^8.19.0",
     "multer": "^2.0.2",
     "node-cron": "^4.2.1",
+    "node-fetch": "^3.3.2",
     "nodemailer": "^7.0.7",
     "uuid": "^13.0.0",
     "zod": "^4.1.11"

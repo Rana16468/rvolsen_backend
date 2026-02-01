@@ -201,12 +201,8 @@ const changeMyProfileIntoDb = async (
       // updateData.photo = file?.path?.replace(/\\/g, "/");
 
       if( isExistPhoto?.photo)
-
       {
-
-       
        await deleteFromS3(isExistPhoto?.photo);
-      
       }
 
     
